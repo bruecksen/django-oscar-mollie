@@ -6,7 +6,7 @@ from django.conf import settings
 from django.http import Http404
 from django.urls import reverse
 
-import Mollie
+from mollie.api.client import Client
 from oscar.apps.payment.exceptions import UnableToTakePayment
 from oscar.core.loading import get_class, get_model
 
@@ -41,8 +41,8 @@ def _lazy_get_models():
 
 class Facade(object):
     def __init__(self):
-        self.mollie = Mollie.API.Client()
-        self.mollie.setApiKey(settings.MOLLIE_API_KEY)
+        self.mollie = Client()
+        self.mollie.set_api_key(settings.MOLLIE_API_KEY)
 
     def create_payment(self, order_number, total, description=None, redirect_url=None):
         if not redirect_url:
