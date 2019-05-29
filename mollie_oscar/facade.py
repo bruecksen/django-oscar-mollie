@@ -44,7 +44,7 @@ class Facade(object):
         self.mollie = Client()
         self.mollie.set_api_key(settings.MOLLIE_API_KEY)
 
-    def create_payment(self, order_number, total, description=None, redirect_url=None):
+    def create_payment(self, order_number, total, currency, description=None, redirect_url=None):
         if not redirect_url:
             redirect_url = reverse('customer:order', kwargs={'order_number': order_number})
 
@@ -53,7 +53,10 @@ class Facade(object):
         redirect_url = '%s://%s%s' % (protocol, site.domain, redirect_url)
 
         payment = self.mollie.payments.create({
-            'amount': float(total),
+            'amount': {
+                'currency': currency,
+                'value': float(total)
+            },
             'description': description or self.get_default_description(order_number),
             'redirectUrl': redirect_url,
             'webhookUrl': self.get_webhook_url(),
