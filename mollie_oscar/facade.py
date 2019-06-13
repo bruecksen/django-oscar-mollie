@@ -75,7 +75,7 @@ class Facade(object):
         Return the customer's payment URL
         """
         payment = self.mollie.payments.get(payment_id)
-        return payment.getPaymentUrl()
+        return payment.checkout_url
 
     def get_webhook_url(self):
         # TODO: Make this related to this app without explicit namespace declaration...?
