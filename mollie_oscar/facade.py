@@ -55,7 +55,7 @@ class Facade(object):
         payment = self.mollie.payments.create({
             'amount': {
                 'currency': currency,
-                'value': float(total)
+                'value': str(round(total, 2))
             },
             'description': description or self.get_default_description(order_number),
             'redirectUrl': redirect_url,
