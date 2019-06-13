@@ -104,7 +104,7 @@ class Facade(object):
         The Mollie payment status has changed. Translate this status update to Oscar.
         """
         payment = self.mollie.payments.get(payment_id)
-        amount = Decimal(payment.get('amount'))
+        amount = Decimal(payment.get('amount').get('value'))
         try:
             order_nr = payment.get['metadata']['order_nr']
         except TypeError:
