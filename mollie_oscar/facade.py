@@ -111,12 +111,12 @@ class Facade(object):
             order_nr = None
         order = self.get_order(payment_id, order_nr)
 
-        if payment.isPaid():
+        if payment.is_paid():
             status_code = 'Paid'
             self.complete_order(order, amount, payment_id, status_code)
-        elif payment.isPending():
+        elif payment.is_pending():
             status_code = 'Pending'
-        elif payment.isOpen():
+        elif payment.is_open():
             status_code = 'Open'
         else:
             status_code = 'Cancelled'
