@@ -58,10 +58,10 @@ class WebhookView(OrderPlacementMixin, View):
             order = facade.get_order(payment_id)
 
             # Only send confirmation if order is paid
-            if order.status in settings.OSCAR_MOLLIE_CONFIRMED_STATUSES:
-                self.send_confirmation_message(
-                    order,
-                    self.communication_type_code,
-                )
+            # if order.status in settings.OSCAR_MOLLIE_CONFIRMED_STATUSES:
+            #     self.send_confirmation_message(
+            #         order,
+            #         self.communication_type_code,
+            #     )
 
         return HttpResponse(status=200)
