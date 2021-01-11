@@ -84,17 +84,15 @@ class Facade(object):
         protocol = 'https' if settings.OSCAR_MOLLIE_HTTPS else 'http'
         return '%s://%s%s' % (protocol, site.domain, reverse('mollie_oscar:webhook'))
 
-    def get_order(self, payment_id, order_nr=None):
+    def get_order(self, payment_id, order_nr=None, method=None):
         _lazy_get_models()
 
         try:
             assert order_nr
-            order = Order.objects.get(number=order_nr,
-                                      sources__reference=payment_id,
-                                      sources__source_type=self.get_source_type())
+            order = Order.objects.get(number=order_nr)
         except AssertionError:
             order = Order.objects.get(sources__reference=payment_id,
-                                      sources__source_type=self.get_source_type())
+                                      sources__source_type=self.get_source_type(method))
         except Order.DoesNotExist:
             raise Http404(u"Order with transaction {0} not found".format(payment_id))
 
@@ -106,15 +104,16 @@ class Facade(object):
         """
         payment = self.mollie.payments.get(payment_id)
         amount = Decimal(payment.get('amount').get('value'))
+        method = payment.get('method')
         try:
             order_nr = payment.get['metadata']['order_nr']
         except TypeError:
             order_nr = None
-        order = self.get_order(payment_id, order_nr)
+        order = self.get_order(payment_id, order_nr, method)
 
         if payment.is_paid():
             status_code = 'Paid'
-            self.complete_order(order, amount, payment_id, status_code)
+            self.complete_order(order, amount, payment_id, status_code, method)
         elif payment.is_pending():
             status_code = 'Pending'
         elif payment.is_open():
@@ -125,9 +124,9 @@ class Facade(object):
         self.update_order_payment(order, status_code)
         self.register_payment_event(order, amount, payment_id)
 
-    def complete_order(self, order, amount, reference, status_code):
+    def complete_order(self, order, amount, reference, status_code, method=None):
         try:
-            source = order.sources.get(source_type=self.get_source_type(), reference=reference)
+            source = order.sources.get(source_type=self.get_source_type(method), reference=reference)
             source.debit(amount, reference=reference, status=status_code)
         except Source.DoesNotExist:
             raise UnableToTakePayment('Shit men... What happened?')
