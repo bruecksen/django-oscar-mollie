@@ -149,8 +149,10 @@ class Facade(object):
         for line in order.lines.all():
             PaymentEventQuantity.objects.create(event=event, line=line, quantity=line.quantity)
 
-    def get_source_type(self):
+    def get_source_type(self, method=None):
         _lazy_get_models()
+        code = method and "mollie[%s]" % method or "mollie"
+        name = method and "Mollie[%s]" % method or "Mollie"
         source_type, __ = SourceType.objects.get_or_create(code='mollie',
                                                            defaults={'name': 'Mollie'})
         return source_type
