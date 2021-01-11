@@ -152,6 +152,6 @@ class Facade(object):
         _lazy_get_models()
         code = method and "mollie[%s]" % method or "mollie"
         name = method and "Mollie[%s]" % method or "Mollie"
-        source_type, __ = SourceType.objects.get_or_create(code='mollie',
-                                                           defaults={'name': 'Mollie'})
+        source_type, __ = SourceType.objects.get_or_create(code=code,
+                                                           defaults={'name': name})
         return source_type
