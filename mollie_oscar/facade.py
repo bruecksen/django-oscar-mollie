@@ -92,7 +92,7 @@ class Facade(object):
             order = Order.objects.get(number=order_nr)
         except AssertionError:
             order = Order.objects.get(sources__reference=payment_id,
-                                      sources__source_type=self.get_source_type(method))
+                                      sources__source_type=self.get_source_type(method=method))
         except Order.DoesNotExist:
             raise Http404(u"Order with transaction {0} not found".format(payment_id))
 
@@ -126,7 +126,7 @@ class Facade(object):
 
     def complete_order(self, order, amount, reference, status_code, method=None):
         try:
-            source = order.sources.get(source_type=self.get_source_type(method), reference=reference)
+            source = order.sources.get(source_type=self.get_source_type(method=method), reference=reference)
             source.debit(amount, reference=reference, status=status_code)
         except Source.DoesNotExist:
             raise UnableToTakePayment('Shit men... What happened?')
