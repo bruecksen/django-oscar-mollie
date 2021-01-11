@@ -9,6 +9,7 @@ from django.urls import reverse
 from mollie.api.client import Client
 from oscar.apps.payment.exceptions import UnableToTakePayment
 from oscar.core.loading import get_class, get_model
+from . import signals
 
 logger = logging.getLogger('oscar.checkout')
 
@@ -130,6 +131,7 @@ class Facade(object):
             source.debit(amount, reference=reference, status=status_code)
         except Source.DoesNotExist:
             raise UnableToTakePayment('Shit men... What happened?')
+        signals.payment_successfull.send_robust(sender=self, order=order, payment_id=reference)
 
     def update_order_payment(self, order, status_code):
         new_status = settings.MOLLIE_STATUS_MAPPING[status_code]
