@@ -44,14 +44,15 @@ class Facade(object):
     def __init__(self):
         self.mollie = Client()
         self.mollie.set_api_key(settings.MOLLIE_API_KEY)
+        self.protocol = 'https' if settings.OSCAR_MOLLIE_HTTPS else 'http'
+        self.domain = Site.objects.get_current().domain
+
+    def create_url(self, url):
+        return '%s://%s%s' % (self.protocol, self.domain, url)
 
     def create_payment(self, order_number, total, currency, method=None, description=None, redirect_url=None):
         if not redirect_url:
             redirect_url = reverse('customer:order', kwargs={'order_number': order_number})
-
-        site = Site.objects.get_current()
-        protocol = 'https' if settings.OSCAR_MOLLIE_HTTPS else 'http'
-        redirect_url = '%s://%s%s' % (protocol, site.domain, redirect_url)
 
         payment = self.mollie.payments.create({
             'amount': {
@@ -59,7 +60,7 @@ class Facade(object):
                 'value': str(round(total, 2))
             },
             'description': description or self.get_default_description(order_number),
-            'redirectUrl': redirect_url,
+            'redirectUrl': self.create_url(redirect_url),
             'webhookUrl': self.get_webhook_url(),
             'metadata': {
                 'order_nr': order_number
@@ -68,6 +69,28 @@ class Facade(object):
         })
 
         return payment['id']
+
+    def create_customer(self, name=None, email=None):
+        customer = self.mollie.customers.create({
+            'name': name,
+            'email': email
+        })
+        return customer['id']
+
+    def create_first_recurring_payment(self, amount, currency, customer_id, description='First payment', redirect_url=None):
+        first_payment = self.mollie.payments.create({
+            'amount': {
+                'currency': currency,
+                'value': str(round(amount, 2))
+            },
+            'customerId': customer_id,
+            'sequenceType': 'first',
+            'description': description,
+            'redirectUrl': self.create_url(redirect_url),
+            'webhookUrl': self.get_webhook_url(),
+        })
+        return first_payment['id']
+
 
     def get_default_description(self, order_number):
         return 'Order {0}'.format(order_number)
@@ -81,9 +104,7 @@ class Facade(object):
 
     def get_webhook_url(self):
         # TODO: Make this related to this app without explicit namespace declaration...?
-        site = Site.objects.get_current()
-        protocol = 'https' if settings.OSCAR_MOLLIE_HTTPS else 'http'
-        return '%s://%s%s' % (protocol, site.domain, reverse('mollie_oscar:webhook'))
+        return '%s://%s%s' % (self.protocol, self.domain, reverse('mollie_oscar:webhook'))
 
     def get_order(self, payment_id, order_nr=None, method=None):
         _lazy_get_models()
